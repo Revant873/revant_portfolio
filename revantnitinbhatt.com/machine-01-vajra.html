@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02.1 VAJRA · Revant Nitin Bhatt</title>
+<meta name="description" content="VAJRA is a research prototype that requests a supervisory stop when perception is uncertain; it is not a certified machine-safety device.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F7F4EC; --paper-sunk: #EFEBDF; --ink: #14161A;
+    --ink-soft: #54503F; --ink-faint: #8A8271; --rule: #D8D1C1;
+    --grid: rgba(96,112,128,.085);
+    --hazard: #FFD400; --clear: #00A868; --caution: #FF9500; --veto: #E5342A;
+    --accent: var(--caution); /* this project's status colour. swap per machine */
+    --display: "Archivo", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+    --body: "Inter", system-ui, sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.72;
+    -webkit-font-smoothing:antialiased;
+    background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:48px 48px;}
+  a{color:inherit}
+  a:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 46px}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);line-height:1.5}
+  .hatch{height:15px;background-image:repeating-linear-gradient(135deg,var(--accent) 0 10px,var(--ink) 10px 20px);background-size:28.28px 28.28px}
+  .sheet{margin:14px;border:1px solid var(--ink);padding:4px}
+  .sheet-inner{position:relative;border:1px solid var(--ink);overflow:hidden}
+
+  .masthead{background:var(--paper);border-bottom:1px solid var(--ink);position:sticky;top:0;z-index:30}
+  .masthead .wrap{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;justify-content:space-between;padding:15px 46px}
+  .sig{display:flex;align-items:center;gap:13px}
+  .sig-name{font-family:var(--mono);font-size:11px;letter-spacing:.19em;text-transform:uppercase}
+  .back{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--ink-faint);padding:7px 10px}
+  .back:hover{color:var(--ink);background:var(--paper-sunk)}
+
+  .hero{position:relative;padding:68px 0 40px;overflow:hidden}
+  .ghost{position:absolute;right:26px;top:-10px;font-family:var(--display);font-variation-settings:"wdth" 125;font-weight:700;
+    font-size:clamp(9rem,22vw,17rem);line-height:.78;color:rgba(20,22,26,.05);letter-spacing:-.04em;z-index:0}
+  .hero>*:not(.ghost){position:relative;z-index:1}
+  .status{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:10px;font-weight:500;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin-top:20px}
+  .status i{width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none}
+  h1{font-family:var(--display);font-variation-settings:"wdth" 112;font-weight:700;
+    font-size:clamp(2.05rem,5.2vw,3.4rem);line-height:1.11;letter-spacing:-.024em;margin:20px 0 0;max-width:24ch}
+  .lede{max-width:58ch;margin:28px 0 0;color:var(--ink-soft);font-size:1.0625rem;line-height:1.68}
+
+  .vajra-scene{margin:44px 0 0}
+  .vajra-scene+p{line-height:1.7;max-width:78ch}
+
+  .body-grid{display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:0 60px;padding:52px 0 56px}
+  .body-grid p{margin:0 0 18px;color:var(--ink-soft);max-width:64ch}
+  .body-grid h2{font-family:var(--display);font-variation-settings:"wdth" 110;font-weight:700;
+    font-size:1.1rem;letter-spacing:-.005em;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--rule)}
+  .body-grid h2+*{margin-top:0}
+  .body-grid section+section{margin-top:40px}
+  .body-grid ul{margin:0;padding-left:20px;color:var(--ink-soft)}
+  .body-grid li{margin-bottom:14px;line-height:1.66;max-width:62ch}
+  .body-grid li:last-child{margin-bottom:0}
+
+  .rail{border-left:1px solid var(--rule);padding-left:32px}
+  .rail dl{margin:0}
+  .rail dt{font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-faint);margin-top:24px}
+  .rail dt:first-child{margin-top:0}
+  .rail dd{margin:6px 0 0;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--ink)}
+
+  .nextprev{display:flex;justify-content:space-between;gap:20px;border-top:1px solid var(--ink);padding:26px 0;font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase}
+  .nextprev a{text-decoration:none;color:var(--ink-faint)}
+  .nextprev a:hover{color:var(--ink)}
+
+  .titleblock{border-top:1px solid var(--ink);background:var(--paper-sunk)}
+  .titleblock .wrap{display:grid;grid-template-columns:1.5fr 1.2fr .9fr .8fr .6fr;padding:0 46px}
+  .tb{padding:15px 18px 15px 0}
+  .tb+.tb{padding-left:18px;border-left:1px solid var(--rule)}
+  .tb span{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+  .tb strong{display:block;margin-top:5px;font-weight:400;font-family:var(--mono);font-size:11px;line-height:1.45}
+
+  @media (max-width:840px){
+    .wrap{padding:0 24px}
+    .masthead .wrap{padding:14px 24px}
+    .titleblock .wrap{grid-template-columns:repeat(2,minmax(0,1fr));padding:0 24px}
+    .tb:nth-child(odd){padding-left:0;border-left:0}
+    .hero{padding:44px 0 32px}
+    .body-grid{grid-template-columns:minmax(0,1fr);gap:0;padding:40px 0 44px}
+    .rail{border-left:0;border-top:1px solid var(--rule);padding:32px 0 0;margin-top:40px}
+  }
+</style>
+<link rel="stylesheet" href="portfolio-enhancements.css">
+</head>
+<body>
+<div class="sheet"><div class="sheet-inner">
+  <div class="hatch"></div>
+  <header class="masthead">
+    <div class="wrap">
+      <div class="sig">
+        <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><path d="M4 18V4h14M60 18V4H46M4 46v14h14M60 46v14H46" fill="none" stroke="#FFD400" stroke-width="4.5" stroke-linecap="square"/><text x="32" y="40" text-anchor="middle" fill="#14161A" style="font-family:Archivo,sans-serif;font-size:23px;font-weight:700">RB</text></svg>
+        <span class="sig-name">Revant Bhatt · sheet 02.1</span>
+      </div>
+      <a class="back" href="index.html">← back to sheet 01</a>
+    </div>
+  </header>
+
+  <section class="hero wrap">
+    <div class="ghost">1</div>
+    <p class="eyebrow">Sheet 02.1 · datum A · overhead intrusion safety</p>
+    <span class="status"><i></i>In revision, targeting IEEE ISIE 2027.</span>
+    <h1>A research prototype that requests a supervisory stop when perception is uncertain.</h1>
+    <p class="lede">VAJRA monitors a tabletop human–robot workcell. RGB handles routine detection, and thermal is checked only when the RGB result stays unclear. A deterministic state machine then selects CLEAR, CAUTION, or VETO. If a signal is stale, missing, or persistently ambiguous, the prototype requests a supervisory stop.</p>
+    <p class="project-support"><b>Academic support.</b> This work was supported by Prof. Dr. Ing. Matthias Krauledat and Prof. Dr. Ing. Ronny Hartanto.</p>
+    <p class="project-support"><b>Prototype boundary.</b> VAJRA is a research prototype, not a certified machine-safety device.</p>
+    <div class="project-summary" aria-label="Project summary">
+      <div><span>My role</span><strong>Sole author, system design, and evaluation</strong></div>
+      <div><span>Result</span><strong>0 observed unsafe CLEAR decisions in 58 controlled trials</strong></div>
+      <div><span>Latency</span><strong>35.9–53.7 ms perception-to-decision latency. This does not include the robot’s physical stopping time.</strong></div>
+    </div>
+
+    <div class="vajra-scene" role="img" aria-label="Animated diagram of a robot arm mounted at top centre sweeping a crescent path across a workspace. A tracked hand with twenty-one MediaPipe landmarks enters from the right, and the safety state changes as its bounding box overlaps the fixed caution boundary and the veto zone carried by the end effector">
+      <svg viewBox="0 0 640 360" style="width:100%;display:block;background:#1b1d21;border:1px solid var(--ink)">
+        <rect x="16" y="14" width="608" height="332" fill="#f2f0ea"/>
+
+        <g fill="#3b3bd0" opacity="0.75">
+          <rect x="-5" y="-5" width="10" height="10" transform="translate(200,112) rotate(24)"/>
+          <rect x="-5" y="-5" width="10" height="10" transform="translate(252,166) rotate(-16)"/>
+          <rect x="-5" y="-5" width="10" height="10" transform="translate(304,124) rotate(41)"/>
+          <rect x="-5" y="-5" width="10" height="10" transform="translate(352,206) rotate(-30)"/>
+          <rect x="-5" y="-5" width="10" height="10" transform="translate(404,152) rotate(12)"/>
+          <rect x="-5" y="-5" width="10" height="10" transform="translate(276,244) rotate(35)"/>
+          <rect x="-5" y="-5" width="10" height="10" transform="translate(334,266) rotate(-22)"/>
+          <rect x="-5" y="-5" width="10" height="10" transform="translate(432,224) rotate(18)"/>
+          <rect x="-5" y="-5" width="10" height="10" transform="translate(462,182) rotate(-38)"/>
+          <rect x="-5" y="-5" width="10" height="10" transform="translate(238,204) rotate(8)"/>
+        </g>
+
+        <rect id="zoneYellow" x="120" y="80" width="420" height="222" fill="none" stroke="#FFD400" stroke-width="3"/>
+        <g id="zoneGroup"><rect id="zoneRed" x="-45" y="-60" width="90" height="120" fill="none" stroke="#E5342A" stroke-width="3"/></g>
+
+        <rect x="296" y="16" width="48" height="32" fill="#2a2d33"/>
+        <line id="link1" x1="320" y1="48" x2="320" y2="48" stroke="#3550c9" stroke-width="13" stroke-linecap="round"/>
+        <line id="link2" x1="320" y1="48" x2="320" y2="48" stroke="#5a76e0" stroke-width="10" stroke-linecap="round"/>
+        <circle cx="320" cy="48" r="8" fill="#14161A"/>
+        <circle id="elbow" cx="320" cy="48" r="6" fill="#14161A"/>
+        <circle id="eeDot" cx="320" cy="48" r="7" fill="#FFD400" stroke="#14161A" stroke-width="2"/>
+
+        <g id="hitBox"><rect x="-38" y="-32" width="86" height="62" fill="none" stroke="#22d3ee" stroke-width="2.5"/></g>
+
+        <g id="hand">
+          <path d="M38 -14 L 150 -14 L 150 18 L 38 18 Z" fill="#7fa9d4" stroke="#14161A" stroke-width="1.2"/>
+          <g stroke="#9ec4e6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="28,-14 14,-22 2,-26 -8,-28" stroke-width="10"/>
+            <polyline points="10,-16 -6,-19 -18,-20 -28,-21" stroke-width="11"/>
+            <polyline points="10,-4 -8,-5 -22,-6 -33,-6" stroke-width="11"/>
+            <polyline points="11,8 -5,9 -18,10 -28,10" stroke-width="11"/>
+            <polyline points="14,19 0,22 -10,24 -18,25" stroke-width="9"/>
+          </g>
+          <path d="M44 4 L 34 -13 L 12 -18 L 8 -2 L 10 10 L 16 23 L 38 17 Z" fill="#9ec4e6" stroke="#14161A" stroke-width="1.2"/>
+          <g stroke="#0fd98a" stroke-width="1.6" fill="none">
+            <path d="M40 0 L28 -14 L14 -22 L2 -26 L-8 -28"/>
+            <path d="M40 0 L10 -16 L-6 -19 L-18 -20 L-28 -21"/>
+            <path d="M10 -16 L10 -4 L-8 -5 L-22 -6 L-33 -6"/>
+            <path d="M10 -4 L11 8 L-5 9 L-18 10 L-28 10"/>
+            <path d="M11 8 L14 19 L0 22 L-10 24 L-18 25"/>
+            <path d="M40 0 L14 19"/>
+          </g>
+          <g fill="#00ff9c">
+            <circle cx="40" cy="0" r="3.4"/>
+            <circle cx="28" cy="-14" r="2.4"/><circle cx="14" cy="-22" r="2.4"/><circle cx="2" cy="-26" r="2.4"/><circle cx="-8" cy="-28" r="2.8"/>
+            <circle cx="10" cy="-16" r="2.4"/><circle cx="-6" cy="-19" r="2.4"/><circle cx="-18" cy="-20" r="2.4"/><circle cx="-28" cy="-21" r="2.8"/>
+            <circle cx="10" cy="-4" r="2.4"/><circle cx="-8" cy="-5" r="2.4"/><circle cx="-22" cy="-6" r="2.4"/><circle cx="-33" cy="-6" r="2.8"/>
+            <circle cx="11" cy="8" r="2.4"/><circle cx="-5" cy="9" r="2.4"/><circle cx="-18" cy="10" r="2.4"/><circle cx="-28" cy="10" r="2.8"/>
+            <circle cx="14" cy="19" r="2.4"/><circle cx="0" cy="22" r="2.4"/><circle cx="-10" cy="24" r="2.4"/><circle cx="-18" cy="25" r="2.8"/>
+          </g>
+        </g>
+
+        <text id="stateLabel" x="30" y="40" font-family="IBM Plex Mono, monospace" font-size="20" font-weight="700" fill="#00A868">STATE: CLEAR</text>
+        <text x="30" y="58" font-family="IBM Plex Mono, monospace" font-size="11" fill="#3d3d3a">DET:1 · HANDS:1</text>
+        <text id="latencyPill" x="30" y="78" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="500" fill="#94530A" opacity="0">Δt perception-to-decision ≈ 36 ms</text>
+      </svg>
+    </div>
+    <p style="font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin:8px 0 0">Fig. 01. the trial footage can't go up yet: the manuscript is in revision, targeting IEEE ISIE 2027. This reconstruction stands in until it clears. Yellow is the fixed caution boundary; red is the veto zone, carried by the end effector. Δt is perception-to-decision latency: 35.9–53.7 ms. It does not include the robot's physical stopping time.</p>
+
+    <div class="body-grid">
+      <div>
+        <section>
+          <h2>What it does</h2>
+          <ul>
+            <li>RGB is the default high-rate channel: candidate localisation via YOLO, hand confirmation via MediaPipe landmarks.</li>
+            <li>Thermal is queried only when a bounding box lingers in the ROI without stable landmarks. the linger-box condition.</li>
+            <li>A deterministic state machine converts evidence into CLEAR, CAUTION or VETO using asymmetric entry and exit thresholds, so a single ambiguous frame can't make it flicker.</li>
+            <li>VETO never exits straight to CLEAR. it steps down through CAUTION, because recent ambiguity near a boundary is itself evidence.</li>
+            <li>Any stale or missing signal defaults to VETO. Loss of communication produces a supervisory stop request, by construction.</li>
+          </ul>
+        </section>
+        <section>
+          <h2>What I found</h2>
+          <p>Across 58 controlled trials, there were 0 observed unsafe CLEAR decisions. With bare skin or coloured gloves, thermal contrast was useful: it reduced unexpected state transitions by up to 80%, and no missed supervisory stop requests were observed in those conditions.</p>
+          <p>Insulated black gloves were the useful negative result. Thermal added perception-to-decision latency and oscillation but did not change the observed unsafe CLEAR count, because the insulation removed the surface contrast the sensor needed. In that condition, the combined system behaved like RGB-only. I would not claim a fusion benefit where the second sensor had no useful signal.</p>
+          <p>This is an experimental result, not evidence of zero residual risk or safety certification.</p>
+        </section>
+      </div>
+      <aside class="rail">
+        <dl>
+          <dt>Status</dt><dd>In revision, targeting IEEE ISIE 2027.</dd>
+          <dt>Role</dt><dd>Sole author, system design and evaluation</dd>
+          <dt>Trials</dt><dd>58, RGB-only vs RGB+Thermal</dd>
+          <dt>Result</dt><dd>0 observed unsafe CLEAR decisions · 58 controlled trials</dd>
+          <dt>Stack</dt><dd>YOLO · MediaPipe Hands · Raspberry Pi · thermal advisor</dd>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <nav class="nextprev wrap">
+    <a href="machine-06-trackwheel.html" aria-label="Previous project: Track wheel">← Previous</a>
+    <a href="index.html#work">All work</a>
+    <a href="machine-02-xplanar.html" aria-label="Next project: XPlanar">Next →</a>
+  </nav>
+
+  <footer class="titleblock">
+    <div class="wrap">
+      <div class="tb"><span>Drawn by</span><strong>R. N. Bhatt</strong></div>
+      <div class="tb"><span>Contact</span><strong>rb3971@columbia.edu</strong></div>
+      <div class="tb"><span>Location</span><strong>New York, NY</strong></div>
+      <div class="tb"><span>Revision</span><strong>D · 2026</strong></div>
+      <div class="tb"><span>Sheet</span><strong>02.1 / 07</strong></div>
+    </div>
+  </footer>
+  <div class="hatch"></div>
+</div></div>
+<script>
+(function () {
+  var zoneGroup = document.getElementById('zoneGroup');
+  var link1 = document.getElementById('link1');
+  var link2 = document.getElementById('link2');
+  var elbow = document.getElementById('elbow');
+  var eeDot = document.getElementById('eeDot');
+  var hand = document.getElementById('hand');
+  var hit = document.getElementById('hitBox');
+  var label = document.getElementById('stateLabel');
+  var pill = document.getElementById('latencyPill');
+  if (!hand) return;
+
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var BASE_X = 320, BASE_Y = 48, L1 = 85, L2 = 85;
+  var ARC_RX = 125, ARC_RY = 150, ANG_START = 145, ANG_END = 35;
+  var HAND_NEAR_X = 430, HAND_FAR_X = 620, HAND_Y = 175;
+  var HAND_PERIOD = 7000;
+  var BASE_PERIOD = 4200;
+  var YELLOW = { x: 120, y: 80, w: 420, h: 222 };
+  var RED_W = 90, RED_H = 120;
+  var BOX = { dx: -38, dy: -32, w: 86, h: 62 };
+  var SPEED = { CLEAR: 1, CAUTION: 0.3, VETO: 0 };
+  var COLOR = { CLEAR: '#00A868', CAUTION: '#94530A', VETO: '#E5342A' };
+
+  var sweep = 0, sweepDir = 1, lastState = '', lastTime = null, pillTimer = null;
+
+  function solveIK(bx, by, ex, ey, l1, l2) {
+    var dx = ex - bx, dy = ey - by;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    dist = Math.min(dist, l1 + l2 - 0.001);
+    dist = Math.max(dist, Math.abs(l1 - l2) + 0.001);
+    var a1 = Math.acos((l1 * l1 + dist * dist - l2 * l2) / (2 * l1 * dist));
+    var baseAngle = Math.atan2(dy, dx);
+    var elbowAngle = baseAngle - a1;
+    return { x: bx + l1 * Math.cos(elbowAngle), y: by + l1 * Math.sin(elbowAngle) };
+  }
+
+  function overlaps(a, b) {
+    return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+  }
+
+  function frame(now) {
+    if (lastTime === null) lastTime = now;
+    var dt = Math.min(now - lastTime, 60);
+    lastTime = now;
+
+    var hp = (now % HAND_PERIOD) / HAND_PERIOD;
+    var ht = hp < 0.5 ? hp * 2 : 2 - hp * 2;
+    var handX = HAND_FAR_X + (HAND_NEAR_X - HAND_FAR_X) * ht;
+
+    var ang = (ANG_START + (ANG_END - ANG_START) * sweep) * Math.PI / 180;
+    var eeX = BASE_X + ARC_RX * Math.cos(ang);
+    var eeY = BASE_Y + ARC_RY * Math.sin(ang);
+
+    var handBox = { x: handX + BOX.dx, y: HAND_Y + BOX.dy, w: BOX.w, h: BOX.h };
+    var redBox = { x: eeX - RED_W / 2, y: eeY - RED_H / 2, w: RED_W, h: RED_H };
+    var state = overlaps(handBox, redBox) ? 'VETO' : overlaps(handBox, YELLOW) ? 'CAUTION' : 'CLEAR';
+
+    sweep += sweepDir * (dt / BASE_PERIOD) * SPEED[state];
+    if (sweep >= 1) { sweep = 1; sweepDir = -1; }
+    if (sweep <= 0) { sweep = 0; sweepDir = 1; }
+
+    var el = solveIK(BASE_X, BASE_Y, eeX, eeY, L1, L2);
+    link1.setAttribute('x2', el.x.toFixed(1)); link1.setAttribute('y2', el.y.toFixed(1));
+    link2.setAttribute('x1', el.x.toFixed(1)); link2.setAttribute('y1', el.y.toFixed(1));
+    link2.setAttribute('x2', eeX.toFixed(1)); link2.setAttribute('y2', eeY.toFixed(1));
+    elbow.setAttribute('cx', el.x.toFixed(1)); elbow.setAttribute('cy', el.y.toFixed(1));
+    eeDot.setAttribute('cx', eeX.toFixed(1)); eeDot.setAttribute('cy', eeY.toFixed(1));
+    zoneGroup.setAttribute('transform', 'translate(' + eeX.toFixed(1) + ',' + eeY.toFixed(1) + ')');
+
+    var t = 'translate(' + handX.toFixed(1) + ',' + HAND_Y + ')';
+    hand.setAttribute('transform', t);
+    hit.setAttribute('transform', t);
+
+    if (state !== lastState) {
+      label.textContent = 'STATE: ' + state;
+      label.setAttribute('fill', COLOR[state]);
+      document.getElementById('zoneRed').setAttribute('stroke-width', state === 'VETO' ? '5' : '3');
+      pill.setAttribute('opacity', '1');
+      clearTimeout(pillTimer);
+      pillTimer = setTimeout(function () { pill.setAttribute('opacity', '0'); }, 700);
+      lastState = state;
+    }
+    if (!reduce) requestAnimationFrame(frame);
+  }
+
+  if (reduce) {
+    var a0 = 55 * Math.PI / 180;
+    var ex = BASE_X + ARC_RX * Math.cos(a0), ey = BASE_Y + ARC_RY * Math.sin(a0);
+    var el0 = solveIK(BASE_X, BASE_Y, ex, ey, L1, L2);
+    link1.setAttribute('x2', el0.x); link1.setAttribute('y2', el0.y);
+    link2.setAttribute('x1', el0.x); link2.setAttribute('y1', el0.y);
+    link2.setAttribute('x2', ex); link2.setAttribute('y2', ey);
+    elbow.setAttribute('cx', el0.x); elbow.setAttribute('cy', el0.y);
+    eeDot.setAttribute('cx', ex); eeDot.setAttribute('cy', ey);
+    zoneGroup.setAttribute('transform', 'translate(' + ex + ',' + ey + ')');
+    var t0 = 'translate(440,' + HAND_Y + ')';
+    hand.setAttribute('transform', t0);
+    hit.setAttribute('transform', t0);
+    label.textContent = 'STATE: VETO';
+    label.setAttribute('fill', COLOR.VETO);
+  } else {
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+<script src="portfolio-enhancements.js"></script>
+</body>
+</html>

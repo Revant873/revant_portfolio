@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02.5 Bipedal robot · Revant Nitin Bhatt</title>
+<meta name="description" content="A biped built from a published open design to learn inverse kinematics, and the co-authored paper on underactuation and inertia that came out of working on it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F4EC;--paper-sunk:#EFEBDF;--ink:#14161A;
+    --ink-soft:#54503F;--ink-faint:#8A8271;--rule:#D8D1C1;
+    --grid:rgba(96,112,128,.085);
+    --hazard:#FFD400;--clear:#00A868;--caution:#FF9500;--veto:#E5342A;
+    --accent:var(--clear);
+    --display:"Archivo",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --body:"Inter",system-ui,sans-serif;
+    --ease:cubic-bezier(.2,.7,.3,1);
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font-family:var(--body);font-size:15.5px;line-height:1.72;
+    -webkit-font-smoothing:antialiased;background-color:var(--paper);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    background-size:48px 48px}
+  a{color:inherit}
+  a:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 46px}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint);line-height:1.5}
+  .hatch{height:15px;background-image:repeating-linear-gradient(135deg,var(--accent) 0 10px,var(--ink) 10px 20px);background-size:28.28px 28.28px}
+  .sheet{margin:14px;border:1px solid var(--ink);padding:4px}
+  .sheet-inner{position:relative;border:1px solid var(--ink);overflow:hidden}
+
+  .masthead{background:var(--paper);border-bottom:1px solid var(--ink);position:sticky;top:0;z-index:30}
+  .masthead .wrap{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;justify-content:space-between;padding:15px 46px}
+  .sig{display:flex;align-items:center;gap:13px}
+  .sig-name{font-family:var(--mono);font-size:11px;letter-spacing:.19em;text-transform:uppercase}
+  .back{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--ink-faint);padding:7px 10px}
+  .back:hover{color:var(--ink);background:var(--paper-sunk)}
+
+  .hero{position:relative;padding:68px 0 0;overflow:hidden}
+  .ghost{position:absolute;right:26px;top:-10px;font-family:var(--display);font-variation-settings:"wdth" 125;font-weight:700;
+    font-size:clamp(9rem,22vw,17rem);line-height:.78;color:rgba(20,22,26,.05);letter-spacing:-.04em;z-index:0}
+  .hero>*:not(.ghost){position:relative;z-index:1}
+  .status{display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:20px}
+  .status span{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase}
+  .status i{width:9px;height:9px;border-radius:50%;flex:none}
+  .i-pub{background:var(--clear)}.i-build{background:var(--ink-faint)}
+  h1{font-family:var(--display);font-variation-settings:"wdth" 112;font-weight:700;
+    font-size:clamp(2.05rem,5.2vw,3.4rem);line-height:1.11;letter-spacing:-.024em;margin:20px 0 0;max-width:24ch}
+  .lede{max-width:58ch;margin:28px 0 0;color:var(--ink-soft);font-size:1.0625rem;line-height:1.68;text-align:justify;hyphens:auto}
+
+  .credit{margin:26px 0 0;border-left:3px solid var(--hazard);padding:2px 0 2px 18px;max-width:60ch}
+  .credit p{margin:0;font-size:14px;line-height:1.66;color:var(--ink-soft)}
+  .credit b{font-weight:500;color:var(--ink)}
+  .credit a{color:var(--ink);border-bottom:1px solid var(--ink-faint)}
+
+  .cut{display:flex;align-items:center;gap:12px;padding:56px 0 4px}
+  .cut b{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;
+    width:26px;height:26px;border:1px solid var(--ink);border-radius:50%;display:grid;place-items:center;flex:none}
+  .cut hr{flex:1;border:0;border-top:1px dashed var(--ink-faint);margin:0}
+  .part{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 18px;padding:12px 0 6px}
+  .part h2{font-family:var(--display);font-variation-settings:"wdth" 112;font-weight:700;
+    font-size:clamp(1.6rem,3.6vw,2.1rem);margin:0;letter-spacing:-.02em}
+
+  figure{margin:0}
+  .fig{border:1px solid var(--ink);background:var(--paper);line-height:0;overflow:hidden}
+  .fig svg{width:100%;display:block}
+  .figcap{margin-top:11px;font-family:var(--mono);font-size:8.5px;line-height:1.65;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint)}
+  .figcap b{display:block;font-weight:500;color:var(--ink);margin-bottom:3px}
+  .figwide{margin:30px 0 0;max-width:660px}
+
+  .cols{display:grid;grid-template-columns:minmax(0,1fr) 268px;gap:0 60px;padding:38px 0 0}
+  .cols p{margin:0 0 18px;color:var(--ink-soft);max-width:64ch;text-align:justify;hyphens:auto}
+  .cols h3{font-family:var(--display);font-variation-settings:"wdth" 110;font-weight:700;
+    font-size:1.05rem;letter-spacing:-.005em;margin:0 0 14px;padding-bottom:9px;border-bottom:1px solid var(--rule);position:relative}
+  .cols section+section{margin-top:36px}
+  .cols ul{margin:0;padding-left:20px;color:var(--ink-soft)}
+  .cols li{margin-bottom:13px;line-height:1.66;max-width:62ch}
+  .cols li:last-child{margin-bottom:0}
+  .pull{border-left:3px solid var(--hazard);padding:2px 0 2px 18px;margin:0 0 20px;max-width:62ch}
+  .pull p{margin:0;font-size:15px;color:var(--ink)}
+
+  .rail{border-left:1px solid var(--rule);padding-left:32px}
+  .rail dl{margin:0}
+  .rail dt{font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-faint);margin-top:22px}
+  .rail dt:first-child{margin-top:0}
+  .rail dd{margin:6px 0 0;font-family:var(--mono);font-size:11.5px;line-height:1.55;color:var(--ink)}
+  .rail dd a{color:var(--ink);border-bottom:1px solid var(--ink-faint)}
+
+  .tbl-wrap{margin:14px 0 20px;overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:480px;font-family:var(--mono);font-size:11px}
+  caption{text-align:left;font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);padding-bottom:9px}
+  th,td{padding:9px 11px;border:1px solid var(--rule);text-align:left;vertical-align:top}
+  thead th{background:var(--paper-sunk);font-weight:500;letter-spacing:.1em;text-transform:uppercase;font-size:8.5px;color:var(--ink-faint)}
+  tbody th{font-weight:500;color:var(--ink);white-space:nowrap}
+  td.unit{color:var(--ink-faint);white-space:nowrap}
+  td.flag{background:rgba(255,212,0,.28);font-weight:500;color:var(--ink)}
+
+  .nextprev{display:flex;justify-content:space-between;gap:20px;border-top:1px solid var(--ink);padding:26px 0;margin-top:56px;font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase}
+  .nextprev a{text-decoration:none;color:var(--ink-faint)}
+  .nextprev a:hover{color:var(--ink)}
+
+  .titleblock{border-top:1px solid var(--ink);background:var(--paper-sunk)}
+  .titleblock .wrap{display:grid;grid-template-columns:1.5fr 1.2fr .9fr .8fr .6fr;padding:0 46px}
+  .tb{padding:15px 18px 15px 0}
+  .tb+.tb{padding-left:18px;border-left:1px solid var(--rule)}
+  .tb span{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint)}
+  .tb strong{display:block;margin-top:5px;font-weight:400;font-family:var(--mono);font-size:11px;line-height:1.45}
+
+  .bp-label{font-family:var(--mono);font-size:7.2px;letter-spacing:.1em;fill:#8A8271}
+  .bp-read{font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.12em;fill:#14161A}
+  .bp-tick{font-family:var(--mono);font-size:7px;letter-spacing:.1em;fill:#8A8271}
+
+  @media (max-width:840px){
+    .wrap{padding:0 24px}
+    .masthead .wrap{padding:14px 24px}
+    .titleblock .wrap{grid-template-columns:repeat(2,minmax(0,1fr));padding:0 24px}
+    .tb:nth-child(odd){padding-left:0;border-left:0}
+    .hero{padding:44px 0 0}
+    .cols{grid-template-columns:minmax(0,1fr);gap:0;padding:32px 0 0}
+    .rail{border-left:0;border-top:1px solid var(--rule);padding:30px 0 0;margin-top:38px}
+  }
+
+  @media (prefers-reduced-motion:no-preference){
+    .hatch{animation:creep 4s linear infinite}
+    @keyframes creep{to{background-position:28.28px 0}}
+    .rise{animation:rise 640ms var(--ease) both}
+    @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+    .d1{animation-delay:90ms}.d2{animation-delay:190ms}.d3{animation-delay:300ms}.d4{animation-delay:420ms}
+    .ghost{animation:rise 900ms 60ms var(--ease) both}
+    .reveal{opacity:0;transform:translateY(16px);transition:opacity 620ms var(--ease),transform 620ms var(--ease)}
+    .reveal.in{opacity:1;transform:none}
+    .cols h3::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--ink);
+      transform:scaleX(0);transform-origin:left;transition:transform 700ms var(--ease) 120ms}
+    section.reveal.in h3::after{transform:scaleX(1)}
+    tbody tr{opacity:0;transform:translateY(8px);transition:opacity 400ms ease,transform 400ms ease}
+    .reveal.in tbody tr{opacity:1;transform:none}
+    .reveal.in tbody tr:nth-child(1){transition-delay:50ms}
+    .reveal.in tbody tr:nth-child(2){transition-delay:95ms}
+    .reveal.in tbody tr:nth-child(3){transition-delay:140ms}
+    .reveal.in tbody tr:nth-child(4){transition-delay:185ms}
+    .rail dt,.rail dd{opacity:0;transform:translateY(6px);transition:opacity 420ms ease,transform 420ms ease}
+    .rail.in dt,.rail.in dd{opacity:1;transform:none}
+  }
+</style>
+<link rel="stylesheet" href="portfolio-enhancements.css">
+</head>
+<body>
+<div class="sheet"><div class="sheet-inner">
+  <div class="hatch"></div>
+  <header class="masthead">
+    <div class="wrap">
+      <div class="sig">
+        <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><path d="M4 18V4h14M60 18V4H46M4 46v14h14M60 46v14H46" fill="none" stroke="#FFD400" stroke-width="4.5" stroke-linecap="square"/><text x="32" y="40" text-anchor="middle" fill="#14161A" style="font-family:Archivo,sans-serif;font-size:23px;font-weight:700">RB</text></svg>
+        <span class="sig-name">Revant Bhatt · sheet 02.5</span>
+      </div>
+      <a class="back" href="index.html">← back to sheet 01</a>
+    </div>
+  </header>
+
+  <main>
+  <section class="hero wrap">
+    <div class="ghost">5</div>
+    <p class="eyebrow rise d1">Sheet 02.5 · locomotion</p>
+    <div class="status rise d2">
+      <span><i class="i-build"></i>Build. from a published open design</span>
+      <span><i class="i-pub"></i>Paper. published, IJSR, Nov 2025</span>
+    </div>
+    <h1 class="rise d2">What a battery does to a small biped's gait.</h1>
+    <p class="lede rise d3">I built a published biped design as a known-good platform for learning inverse kinematics. The next step was to replace the bench supply with a battery. That simple change turned into a study of mass placement, swing inertia, and the mechanical limits that a controller cannot remove.</p>
+    <div class="project-summary" aria-label="Project summary">
+      <div><span>My role</span><strong>Platform builder and author of the follow-on paper</strong></div>
+      <div><span>Evidence</span><strong>Known-good open design, gait experiments, and a scaling analysis</strong></div>
+      <div><span>Key point</span><strong>Battery position changes balance targets and can roughly double hip swing inertia</strong></div>
+    </div>
+
+    <div class="credit rise d3">
+      <p><b>The mechanical design is not mine.</b> I built the <a href="https://www.instructables.com/Arduino-Controlled-Robotic-Biped/">Arduino Controlled Robotic Biped</a> published by Technovation in 2020. I followed the printed-part, hobby-servo, and Arduino design as published, then used the working platform for the battery-placement study and the paper in Part B.</p>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="cut" aria-hidden="true"><b>A</b><hr><b>A</b></div>
+    <div class="part">
+      <span class="eyebrow">Part A</span>
+      <h2>The Build</h2>
+      <span class="eyebrow">Ongoing</span>
+    </div>
+
+    <div class="cols">
+      <div>
+        <section class="reveal">
+          <h3>Why build someone else's robot</h3>
+          <p>Inverse kinematics is easy to read about and hard to feel. Working from a design that already walked meant the failures I hit were my failures of understanding rather than failures of the machine. when the foot landed wrong, the geometry was fine and my solution wasn't.</p>
+          <p>That's the whole reason to build a known-good platform first. It removes one variable, and the variable it removes is the one you're least equipped to debug.</p>
+        </section>
+
+        <section class="reveal">
+          <h3>What the build revealed</h3>
+          <p>It runs off a bench supply. That's a reasonable choice for a platform meant to be experimented on. you never lose a run to a flat pack, and the mass budget stays clean. But it means the robot has never carried its own power, and I wanted it to.</p>
+          <div class="pull">
+            <p>A battery isn't an accessory. It's roughly two-thirds the mass of a leg segment, and it has to be somewhere.</p>
+          </div>
+          <p>Strictly, the inverse kinematics doesn't change. The links are the same length, so the mapping from foot position to joint angles is the same mapping. What changes is what you ask it for: move the centre of mass and the foot placements that keep the robot balanced move with it, so the trajectory the solver is asked to hit is a different trajectory. The maths is untouched; the targets aren't.</p>
+        </section>
+
+        <section class="reveal">
+          <h3>Where the pack goes</h3>
+          <p>Which turns the battery into a mass-placement decision rather than a wiring one, and that decision is governed by a quantity the paper in Part B names directly: how much of the leg's mass sits below the knee, and therefore how much inertia the hip has to swing.</p>
+          <p>The figure below is that trade-off computed from stated assumptions. Sliding a 180-gram pack from the pelvis to mid-shank roughly doubles the swing inertia about the hip. same robot, same links, same controller, twice the work per step.</p>
+        </section>
+      </div>
+
+      <aside class="rail reveal">
+        <dl>
+          <dt>Origin</dt><dd>Technovation, Instructables, 2020. built as published</dd>
+          <dt>My role</dt><dd>Build, IK study, battery integration in progress</dd>
+          <dt>Actuation</dt><dd>Hobby servos, joint-mounted · Arduino control</dd>
+          <dt>Structure</dt><dd>3D-printed links, servo brackets, bearings</dd>
+          <dt>Open item</dt><dd>On-board power without wrecking the mass budget</dd>
+        </dl>
+      </aside>
+    </div>
+
+    <figure class="figwide reveal">
+      <div class="fig">
+        <svg id="biped" viewBox="0 0 300 216" role="img" aria-label="Elevation diagram of a bipedal robot leg with a battery pack that slides from the pelvis down to mid-shank. As the pack moves distally the centre of mass drops and the swing inertia about the hip roughly doubles, shown by live readouts.">
+          <line x1="30" y1="170" x2="270" y2="170" stroke="#14161A" stroke-width="1.2"/>
+          <g stroke="#8A8271" stroke-width=".8" opacity=".55">
+            <line x1="34" y1="170" x2="28" y2="177"/><line x1="52" y1="170" x2="46" y2="177"/>
+            <line x1="70" y1="170" x2="64" y2="177"/><line x1="88" y1="170" x2="82" y2="177"/>
+            <line x1="106" y1="170" x2="100" y2="177"/><line x1="124" y1="170" x2="118" y2="177"/>
+            <line x1="142" y1="170" x2="136" y2="177"/><line x1="160" y1="170" x2="154" y2="177"/>
+            <line x1="178" y1="170" x2="172" y2="177"/><line x1="196" y1="170" x2="190" y2="177"/>
+            <line x1="214" y1="170" x2="208" y2="177"/><line x1="232" y1="170" x2="226" y2="177"/>
+            <line x1="250" y1="170" x2="244" y2="177"/><line x1="268" y1="170" x2="262" y2="177"/>
+          </g>
+
+          <g stroke="#D8D1C1" stroke-width="5" stroke-linecap="round" fill="none">
+            <line x1="164" y1="56" x2="164" y2="112"/><line x1="164" y1="112" x2="164" y2="164"/>
+            <line x1="152" y1="164" x2="180" y2="164"/>
+          </g>
+
+          <rect x="126" y="22" width="48" height="34" rx="3" fill="#F7F4EC" stroke="#14161A" stroke-width="1.3"/>
+          <text x="150" y="42" text-anchor="middle" class="bp-tick">PELVIS</text>
+
+          <line x1="150" y1="56" x2="150" y2="112" stroke="#14161A" stroke-width="7" stroke-linecap="round"/>
+          <line x1="150" y1="112" x2="150" y2="164" stroke="#14161A" stroke-width="6" stroke-linecap="round"/>
+          <line x1="136" y1="164" x2="168" y2="164" stroke="#14161A" stroke-width="6" stroke-linecap="round"/>
+
+          <circle cx="150" cy="56" r="4.2" fill="#F7F4EC" stroke="#14161A" stroke-width="1.6"/>
+          <circle cx="150" cy="112" r="3.8" fill="#F7F4EC" stroke="#14161A" stroke-width="1.6"/>
+          <circle cx="150" cy="164" r="3.4" fill="#F7F4EC" stroke="#14161A" stroke-width="1.6"/>
+          <text x="160" y="59" class="bp-tick">HIP</text>
+          <text x="160" y="115" class="bp-tick">KNEE</text>
+          <text x="160" y="158" class="bp-tick">ANKLE</text>
+
+          <line x1="206" y1="56" x2="206" y2="149" stroke="#8A8271" stroke-width=".8" stroke-dasharray="3 3"/>
+          <line x1="202" y1="56" x2="210" y2="56" stroke="#8A8271" stroke-width=".9"/>
+          <line x1="202" y1="149" x2="210" y2="149" stroke="#8A8271" stroke-width=".9"/>
+          <text x="214" y="59" class="bp-tick">PROXIMAL · 0 mm</text>
+          <text x="214" y="152" class="bp-tick">DISTAL · 150 mm</text>
+
+          <g id="bpPack">
+            <rect x="-11" y="-7" width="22" height="14" rx="2" fill="#FFD400" stroke="#14161A" stroke-width="1.3"/>
+            <line x1="-5" y1="-7" x2="-5" y2="7" stroke="#14161A" stroke-width=".8"/>
+            <line x1="2" y1="-7" x2="2" y2="7" stroke="#14161A" stroke-width=".8"/>
+          </g>
+
+          <g id="bpCom">
+            <circle r="6.5" fill="none" stroke="#E5342A" stroke-width="1.4"/>
+            <path d="M-6.5 0 A 6.5 6.5 0 0 1 0 -6.5 L 0 0 Z M 6.5 0 A 6.5 6.5 0 0 1 0 6.5 L 0 0 Z" fill="#E5342A"/>
+          </g>
+          <text id="bpComLbl" x="0" y="0" class="bp-tick" fill="#8E1D16">CoM</text>
+
+          <text x="20" y="188" class="bp-label">MASSES ASSUMED · THIGH 120 · SHANK 95 · FOOT 60 · PACK 180 g</text>
+          <text x="20" y="198" class="bp-label">SWING INERTIA TAKEN ABOUT THE HIP JOINT</text>
+          <text x="20" y="211" class="bp-read" id="bpPos">PACK 000 mm FROM HIP</text>
+          <text x="280" y="211" text-anchor="end" class="bp-read" id="bpInertia">INERTIA ×1.00</text>
+        </svg>
+      </div>
+      <figcaption class="figcap"><b>Fig. 01. where the battery goes</b>Same links, same controller. Pack at the pelvis vs mid-shank, swing inertia about the hip. Masses are stated assumptions for a robot of this class, not measurements from mine.</figcaption>
+    </figure>
+  </section>
+
+  <section class="wrap">
+    <div class="cut" aria-hidden="true"><b>B</b><hr><b>B</b></div>
+    <div class="part">
+      <span class="eyebrow">Part B</span>
+      <h2>The Paper</h2>
+      <span class="eyebrow">Published · two authors</span>
+    </div>
+
+    <div class="cols">
+      <div>
+        <section class="reveal">
+          <h3>The argument</h3>
+          <p>Mass distribution changes the gait problem before the controller touches it. Legged robots usually fail at contact, and the literature usually answers with better control. The paper argues the constraint is mechanical before it is algorithmic: what matters at touchdown is which side of the joint is in charge, the limb or the drivetrain.</p>
+          <p>This scaling argument depends on the paper's geometric-similarity and actuator-scaling assumptions. Under those assumptions, segment mass grows as <em>s</em>³ while limb inertia grows as <em>s</em>⁵. The inertial torque needed for the same swing profile therefore grows faster than continuous actuator torque, which the paper models as scaling with <em>s</em>³. As the robot gets larger, the mechanical demand pulls away from what the motor can sustain within that model.</p>
+        </section>
+
+        <section class="reveal">
+          <h3>Two doctrines</h3>
+          <ul>
+            <li><b>Underactuation by design</b>. not removing actuators, but building stance–swing asymmetry into hardware. Clutches that lock under load and release in swing, rising-rate elastics that are soft at touchdown and authoritative at toe-off, couplings that share load in stance and disengage for clearance. Behaviours that become probable without the controller having to insist.</li>
+            <li><b>Design-to-inertia</b>. treating moments of inertia, reflected inertia through gearing, and mass placement as budgeted design variables. Keep distal mass low, keep gear ratios moderate enough that joints stay backdrivable, and size thermal paths for continuous walking rather than for isolated peak events.</li>
+          </ul>
+        </section>
+
+        <section class="reveal">
+          <h3>Four metrics</h3>
+          <p>The paper's practical contribution is a small set of plant-level numbers that can be computed from CAD and basic tests, so mechanical choices become as comparable across platforms as controller performance already is.</p>
+          <div class="tbl-wrap">
+            <table>
+              <caption>Plant-level metrics proposed for cross-platform comparison</caption>
+              <thead><tr><th scope="col">Metric</th><th scope="col">Definition</th><th scope="col">What it exposes</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">RIR</th><td class="unit">(n²J<sub>m</sub> + J<sub>g</sub>) / J<sub>link</sub></td><td>Reflected inertia ratio. whether the limb or the drivetrain dominates the joint. Small means backdrivable.</td></tr>
+                <tr><th scope="row">DMF</th><td class="unit">(m<sub>shank</sub> + m<sub>foot</sub>) / m<sub>leg</sub></td><td>Distal mass fraction. how much mass the leg has to swing and arrest at every step.</td></tr>
+                <tr><th scope="row">RAI</th><td class="unit">1 − m<sub>motors,distal</sub> / m<sub>leg</sub></td><td>Remote actuation index. how completely actuators have been moved off the moving segments.</td></tr>
+                <tr><th scope="row">ERB</th><td class="unit">power saved vs baseline</td><td>Energy-recycling benefit. whether clutched or parallel elastics actually cut electrical burden.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="reveal">
+          <h3>What the metrics say about my own platform</h3>
+          <p>Badly, and that's the honest reading. Hobby servos are high-ratio and effectively non-backdrivable, so RIR is large at every joint. the drivetrain dominates, not the limb. The servos are joint-mounted rather than routed from the pelvis, so RAI is near zero and DMF is high before a battery is added at all.</p>
+          <p>None of which is a criticism of the original design. It's a low-cost platform built to survive gait experiments, and it does that well. But it sits at the opposite end of every axis the paper argues for, which is a useful place to be standing when you're trying to understand why the argument matters.</p>
+        </section>
+      </div>
+
+      <aside class="rail reveal">
+        <dl>
+          <dt>Title</dt><dd>Designing for Dynamics: Underactuation and Inertia as First Principles in Bipedal Robots</dd>
+          <dt>Authors</dt><dd>Revant Nitin Bhatt (Hochschule Rhein-Waal) · Djona Christ-Médèsse Dossou (TU Darmstadt)</dd>
+          <dt>Venue</dt><dd>IJSR vol. 14, issue 11 · November 2025</dd>
+          <dt>Paper ID</dt><dd>SR251117200057</dd>
+          <dt>DOI</dt><dd><a href="https://dx.doi.org/10.21275/SR251117200057">10.21275/SR251117200057</a></dd>
+          <dt>Metrics</dt><dd>RIR · DMF · RAI · ERB</dd>
+        </dl>
+      </aside>
+    </div>
+  </section>
+  </main>
+
+  <nav class="nextprev wrap">
+    <a href="machine-04-hand.html" aria-label="Previous project: Tendon-driven hand">← Previous</a>
+    <a href="index.html#work">All work</a>
+    <a href="machine-06-trackwheel.html" aria-label="Next project: Track wheel">Next →</a>
+  </nav>
+
+  <footer class="titleblock">
+    <div class="wrap">
+      <div class="tb"><span>Drawn by</span><strong>R. N. Bhatt</strong></div>
+      <div class="tb"><span>Contact</span><strong>rb3971@columbia.edu</strong></div>
+      <div class="tb"><span>Location</span><strong>New York, NY</strong></div>
+      <div class="tb"><span>Revision</span><strong>D · 2026</strong></div>
+      <div class="tb"><span>Sheet</span><strong>02.5 / 07</strong></div>
+    </div>
+  </footer>
+  <div class="hatch"></div>
+</div></div>
+
+<script>
+(function(){
+  var items=document.querySelectorAll('.reveal');
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!window.IntersectionObserver||reduce){items.forEach(function(el){el.classList.add('in')});return}
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(!e.isIntersecting)return; e.target.classList.add('in'); io.unobserve(e.target); });
+  },{rootMargin:'0px 0px -8% 0px',threshold:.12});
+  items.forEach(function(el){io.observe(el)});
+})();
+
+(function () {
+  var svg = document.getElementById('biped');
+  if (!svg) return;
+  var PACK = document.getElementById('bpPack'), COM = document.getElementById('bpCom'),
+      LBL = document.getElementById('bpComLbl'),
+      POS = document.getElementById('bpPos'), INE = document.getElementById('bpInertia');
+
+  // real geometry (mm) and mass (g); drawing scale maps mm along the leg to SVG units
+  var HIP_Y = 56, SCALE = 0.62;
+  var M = { thigh: 120, shank: 95, foot: 60, pack: 180 };
+  var R = { thigh: 45, shank: 135, foot: 180 };      // segment CoM distance from hip, mm
+  var RMAX = 150;                                     // pack travel, mm
+  var I_SEG = M.thigh * R.thigh * R.thigh + M.shank * R.shank * R.shank + M.foot * R.foot * R.foot;
+  var M_SEG = M.thigh + M.shank + M.foot;
+  var MOM_SEG = M.thigh * R.thigh + M.shank * R.shank + M.foot * R.foot;
+  var I_BASE = I_SEG;                                 // pack at the hip contributes nothing
+
+  var DUR = 9000, running = false, raf = null, t0 = null;
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+  function draw(f) {
+    var r = RMAX * f;                                  // pack distance from hip, mm
+    var packY = HIP_Y + r * SCALE;
+    PACK.setAttribute('transform', 'translate(150,' + packY.toFixed(2) + ')');
+
+    var com = (MOM_SEG + M.pack * r) / (M_SEG + M.pack);
+    var comY = HIP_Y + com * SCALE;
+    COM.setAttribute('transform', 'translate(112,' + comY.toFixed(2) + ')');
+    LBL.setAttribute('x', '92'); LBL.setAttribute('y', (comY + 2.6).toFixed(2));
+
+    var I = I_SEG + M.pack * r * r;
+    POS.textContent = 'PACK ' + String(Math.round(r)).padStart(3, '0') + ' mm FROM HIP';
+    INE.textContent = 'INERTIA \u00D7' + (I / I_BASE).toFixed(2);
+  }
+
+  function frame(now) {
+    if (t0 === null) t0 = now;
+    var q = ((now - t0) % DUR) / DUR;
+    draw(q < 0.5 ? ease(q * 2) : ease(2 - q * 2));
+    if (running) raf = requestAnimationFrame(frame);
+  }
+
+  draw(0.55);
+  if (reduce || !window.IntersectionObserver) return;
+  new IntersectionObserver(function (es) {
+    es.forEach(function (e) {
+      if (e.isIntersecting && !running) { running = true; t0 = null; raf = requestAnimationFrame(frame); }
+      else if (!e.isIntersecting && running) { running = false; cancelAnimationFrame(raf); }
+    });
+  }, { threshold: 0.15 }).observe(svg);
+})();
+</script>
+<script src="portfolio-enhancements.js"></script>
+</body>
+</html>
